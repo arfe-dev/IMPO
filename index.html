@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego del Impostor - Móvil</title>
+<style>
+body {
+    font-family: 'Arial', sans-serif;
+    margin:0; padding:0;
+    background: linear-gradient(to bottom, #fefcea, #f1da36);
+    display:flex; justify-content:center; align-items:center; min-height:100vh;
+    flex-direction:column;
+}
+h1 {color:#333; text-align:center; margin:20px 0;}
+button {
+    padding:18px 30px;
+    font-size:20px;
+    border:none;
+    border-radius:15px;
+    margin:10px;
+    background-color:#ff6f61;
+    color:white;
+    width:80%;
+    max-width:300px;
+}
+button:hover {background-color:#ff4b3a; cursor:pointer;}
+#menu, #config, #gameArea {display:none; text-align:center; width:100%;}
+.wordBox {
+    font-size:22px;
+    padding:20px;
+    margin:15px auto;
+    border-radius:15px;
+    background-color:#fff;
+    color:#333;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.3);
+    max-width:90%;
+    word-wrap: break-word;
+}
+input[type=number] {
+    padding:12px; font-size:18px; border-radius:8px; border:1px solid #ccc;
+    width:60px; text-align:center;
+}
+@media(max-width:600px){
+    .wordBox {font-size:18px; padding:15px;}
+    button {font-size:18px; padding:15px 25px;}
+}
+</style>
+</head>
+<body>
+
+<h1>¡Juego del Impostor!</h1>
+
+<div id="menu">
+    <button id="startBtn">Iniciar Juego</button>
+</div>
+
+<div id="config">
+    <p>Ingrese cantidad de jugadores (2-20):</p>
+    <input type="number" id="numPlayersInput" min="2" max="20" value="4">
+    <br><br>
+    <label><input type="checkbox" id="clueCheckbox"> El impostor recibe pista</label>
+    <br><br>
+    <button id="confirmBtn">Confirmar</button>
+</div>
+
+<div id="gameArea">
+    <div id="playerName" class="wordBox"></div>
+    <div id="playerWord" class="wordBox">Presioná "Revelar palabra"</div>
+    <button id="revealBtn">Revelar palabra</button>
+    <button id="nextBtn" style="display:none;">Siguiente jugador</button>
+    <button id="revealAllBtn" style="display:none;">Revelar todo</button>
+</div>
+
+<script>
+const words = ["adidas","nike","puma","umbro","asado","empanada","mate","choripán","alfajor","dulce de leche"];
+let players = [];
+let numPlayers = 0;
+let currentPlayer = 0;
+let impostorIndex = -1;
+let showClueToImpostor = false;
+let gameWord = "";
+let clue = "";
+
+const menuDiv = document.getElementById('menu');
+const configDiv = document.getElementById('config');
+const gameAreaDiv = document.getElementById('gameArea');
+const playerNameDiv = document.getElementById('playerName');
+const playerWordDiv = document.getElementById('playerWord');
+const revealBtn = document.getElementById('revealBtn');
+const nextBtn = document.getElementById('nextBtn');
+const revealAllBtn = document.getElementById('revealAllBtn');
+
+// Mostrar menú al cargar
+menuDiv.style.display = 'block';
+
+document.getElementById('startBtn').addEventListener('click', ()=>{
+    menuDiv.style.display='none';
+    configDiv.style.display='block';
+});
+
+document.getElementById('confirmBtn').addEventListener('click', ()=>{
+    numPlayers = parseInt(document.getElementById('numPlayersInput').value);
+    if(isNaN(numPlayers)||numPlayers<2||numPlayers>20){
+        alert("Número de jugadores entre 2 y 20");
+        return;
+    }
+    showClueToImpostor = document.getElementById('clueCheckbox').checked;
+    startGame();
+});
+
+function startGame(){
+    gameWord = words[Math.floor(Math.random()*words.length)];
+    clue = gameWord[0] + "_".repeat(gameWord.length-1);
+    impostorIndex = Math.floor(Math.random()*numPlayers);
+    players = [];
+    for(let i=0;i<numPlayers;i++){
+        if(i===impostorIndex){
+            players.push({name:"Jugador "+(i+1), word:"Impostor", clue: showClueToImpostor? clue : ""});
+        } else {
+            players.push({name:"Jugador "+(i+1), word:gameWord, clue:""});
+        }
+    }
+    configDiv.style.display='none';
+    gameAreaDiv.style.display='block';
+    showPlayer();
+}
+
+revealBtn.addEventListener('click', ()=>{
+    const p = players[currentPlayer];
+    if(p.word==="Impostor" && p.clue){
+        playerWordDiv.innerText = "Impostor - Pista: " + p.clue;
+    } else {
+        playerWordDiv.innerText = p.word;
+    }
+    revealBtn.style.display='none';
+    nextBtn.style.display='inline-block';
+});
+
+nextBtn.addEventListener('click', ()=>{
+    currentPlayer++;
+    if(currentPlayer>=numPlayers){
+        // Fin del juego, mostrar "Revelar todo"
+        playerNameDiv.innerText = "Juego terminado";
+        playerWordDiv.innerText = "";
+        revealBtn.style.display='none';
+        nextBtn.style.display='none';
+        revealAllBtn.style.display='inline-block';
+        return;
+    }
+    showPlayer();
+});
+
+revealAllBtn.addEventListener('click', ()=>{
+    let summary = "Resultados del juego:\n\n";
+    players.forEach(p=>{
+        summary += `${p.name}: ${p.word}\n`;
+    });
+    summary += `\nImpostor: ${players[impostorIndex].name}\nPalabra: ${gameWord}`;
+    alert(summary);
+    location.reload();
+});
+
+function showPlayer(){
+    const p = players[currentPlayer];
+    playerNameDiv.innerText = p.name;
+    playerWordDiv.innerText = "Presioná 'Revelar palabra'";
+    revealBtn.style.display='inline-block';
+    nextBtn.style.display='none';
+    revealAllBtn.style.display='none';
+}
+</script>
+
+</body>
+</html>
